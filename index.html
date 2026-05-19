@@ -418,7 +418,6 @@ async function loadFromFirebase() {
     const data = await res.json();
     if (data) {
       state = data;
-      await saveToFirebase();
     } else {
       state = JSON.parse(JSON.stringify(DEFAULT));
       await saveToFirebase(); // 初始化 Firebase 資料
@@ -799,14 +798,10 @@ document.addEventListener('blur', function(e) {
 // ===================== INITIALIZATION =====================
 loadFromFirebase();
 startPolling();
-</script>
-  // ... 上面是你的 initialization 那些程式碼 ...
-loadFromFirebase();
-startPolling();
   // ===================== 景點必買清單功能邏輯 =====================
 let currentModalCtx = { di: null, ii: null };
 
-// 🛍 開啟必買清單彈出視窗
+// 開啟必買清單彈出視窗
 function openBuyModal(di, ii) {
   currentModalCtx = { di, ii };
   const item = state.days[di].items[ii];
@@ -859,7 +854,6 @@ function delBuyItem(bi) {
 // 關閉視窗
 function closeBuyModal() { document.getElementById('buyModalBg').classList.remove('open'); }
 function closeBuyModalBg(e) { if(e.target===document.getElementById('buyModalBg')) closeBuyModal(); }
-  ；
 </script>
 
 <div id="buyModalBg" class="modal-bg" onclick="closeBuyModalBg(event)">
