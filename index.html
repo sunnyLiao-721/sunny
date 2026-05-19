@@ -6,6 +6,42 @@
 <title>東京行程 12/9–12/13</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
+  /* 景點按鈕與彈出視窗樣式 */
+.tl-location-btn {
+  background: var(--cream, #f2ede4);
+  color: var(--ink, #1a1612);
+  border: 1px solid var(--border, #ddd8cf);
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.tl-location-btn:hover { background: var(--border, #ddd8cf); }
+
+.modal-bg {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center;
+  z-index: 1000; opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.modal-bg.open { opacity: 1; pointer-events: auto; }
+.modal-box {
+  background: #fff; padding: 24px; border-radius: 12px; width: 90%; max-width: 400px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.15); position: relative; color: var(--ink, #1a1612);
+}
+.modal-close { position: absolute; top: 14px; right: 16px; background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted, #7a736a); }
+.modal-title { font-family: 'Noto Serif TC', serif; font-size: 18px; font-weight: 600; margin-bottom: 12px; border-bottom: 1px solid var(--border, #ddd8cf); padding-bottom: 8px; }
+.buy-list { list-style: none; margin: 12px 0; max-height: 200px; overflow-y: auto; text-align: left; }
+.buy-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 0.5px dashed var(--border, #ddd8cf); }
+.buy-item-text { flex: 1; font-size: 13.5px; }
+.buy-item-del { background: none; border: none; color: var(--accent, #c0392b); cursor: pointer; font-size: 12px; padding: 0 4px; }
+.buy-input-group { display: flex; gap: 6px; margin-top: 12px; }
+.buy-input { flex: 1; padding: 6px 10px; border: 1px solid var(--border, #ddd8cf); border-radius: 6px; font-size: 13px; }
+.buy-add-btn { background: var(--ink, #1a1612); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
 :root {
   --ink:#1a1612; --paper:#faf8f4; --cream:#f2ede4; --accent:#c0392b;
   --accent-light:#f9ecea; --gold:#8B6914; --gold-light:#f5f0e4;
@@ -763,5 +799,80 @@ document.addEventListener('blur', function(e) {
 loadFromFirebase();
 startPolling();
 </script>
+  // ... 上面是你的 initialization 那些程式碼 ...
+loadFromFirebase();
+startPolling();
+  // ===================== 景點必買清單功能邏輯 =====================
+let currentModalCtx = { di: null, ii: null };
+
+// 🛍 開啟必買清單彈出視窗
+function openBuyModal(di, ii) {
+  currentModalCtx = { di, ii };
+  const item = state.days[di].items[ii];
+  if (!item.buys) item.buys = [];
+  
+  document.getElementById('buyModalTitle').textContent = `🛍 ${item.label} - 必買物品`;
+  renderBuyList();
+  document.getElementById('buyModalBg').classList.add('open');
+}
+
+// 渲染必買清單
+function renderBuyList() {
+  const item = state.days[currentModalCtx.di].items[currentModalCtx.ii];
+  const listEl = document.getElementById('buyList');
+  
+  listEl.innerHTML = item.buys.map((buy, bi) => `
+    <li class="buy-item">
+      <span class="buy-item-text">▪ ${esc(buy)}</span>
+      <button class="buy-item-del" onclick="delBuyItem(${bi})">刪除</button>
+    </li>
+  `).join('');
+}
+
+// 新增必買項目
+function addBuyItem() {
+  const input = document.getElementById('buyInput');
+  const text = input.value.trim();
+  if (!text) return;
+  
+  const item = state.days[currentModalCtx.di].items[currentModalCtx.ii];
+  if (!item.buys) item.buys = [];
+  
+  item.buys.push(text);
+  input.value = '';
+  
+  renderBuyList();
+  if (typeof render === 'function') render(); // 重新渲染主畫面更新計數
+  saveToFirebase();
+}
+
+// 刪除必買項目
+function delBuyItem(bi) {
+  const item = state.days[currentModalCtx.di].items[currentModalCtx.ii];
+  item.buys.splice(bi, 1);
+  renderBuyList();
+  if (typeof render === 'function') render(); // 重新渲染主畫面更新計數
+  saveToFirebase();
+}
+
+// 關閉視窗
+function closeBuyModal() { document.getElementById('buyModalBg').classList.remove('open'); }
+function closeBuyModalBg(e) { if(e.target===document.getElementById('buyModalBg')) closeBuyModal(); }
+  ；
+</script>
+
+<div id="buyModalBg" class="modal-bg" onclick="closeBuyModalBg(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeBuyModal()">×</button>
+    <div id="buyModalTitle" class="modal-title">景點必買物品</div>
+    <ul id="buyList" class="buy-list"></ul>
+    <div class="buy-input-group">
+      <input type="text" id="buyInput" class="buy-input" placeholder="輸入想買的物品...">
+      <button class="buy-add-btn" onclick="addBuyItem()">新增</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
+
