@@ -597,7 +597,7 @@ function renderItem(item, di, ii) {
         ${note}
       </div>
       <div class="tl-actions">
-        <button class="tl-location-btn" onclick="openBuyModal(${di},${ii})">🌸 必買清單${item.buys && item.buys.length > 0 ? ` <span style="background:#d45c8a;color:#fff;border-radius:99px;font-size:10px;padding:1px 6px;font-weight:700;">${item.buys.length}</span>` : ''}</button>
+        <button class="tl-location-btn" onclick="openBuyModal(${di},${ii})">🌸 必買清單${item.buys && item.buys.length > 0 ? ` (${item.buys.length})` : ''}</button>
         <button class="del-btn" onclick="delItem(${di},${ii})">🗑</button>
       </div>
     </li>`;
