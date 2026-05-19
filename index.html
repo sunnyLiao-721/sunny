@@ -418,6 +418,7 @@ async function loadFromFirebase() {
     const data = await res.json();
     if (data) {
       state = data;
+      await saveToFirebase();
     } else {
       state = JSON.parse(JSON.stringify(DEFAULT));
       await saveToFirebase(); // 初始化 Firebase 資料
