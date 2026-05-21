@@ -641,8 +641,10 @@ function renderItem(item, di, ii) {
       <div class="tl-transport-icon">${item.transport.split(' ')[0]}</div>
       <div class="tl-transport-text" contenteditable="false" onblur="state.days[${di}].items[${ii}].transport=this.parentElement.children[0].textContent+' '+this.textContent;saveToFirebase()">${esc(item.transport.substring(item.transport.indexOf(' ')+1))}</div>
     </div>` : '';
+  // Google Maps 自動用景點名稱搜尋
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.label + (item.desc ? ' ' + item.desc : '') + ' 日本')}`;
   const links = [
-    item.maps ? `<a class="lbtn" href="${item.maps}" target="_blank">Google Maps ↗</a>` : '',
+    `<a class="lbtn" href="${mapsUrl}" target="_blank">📍 Google Maps ↗</a>`,
     item.official ? `<a class="lbtn" href="${item.official}" target="_blank">官網 ↗</a>` : '',
     item.tabelog ? `<a class="lbtn" href="${item.tabelog}" target="_blank">Tabelog ↗</a>` : '',
   ].filter(Boolean).join('');
