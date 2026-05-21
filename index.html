@@ -169,6 +169,7 @@ body.edit-on .shop-add-item-btn{display:block;}
 }
 
 /* MODAL */
+.split-add-btn{display:inline-flex!important;align-items:center;gap:4px;}
 .modal-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .2s;}
 .modal-bg.open{opacity:1;pointer-events:auto;}
 .modal{background:#fff;padding:24px;border-radius:12px;width:90%;max-width:420px;box-shadow:0 4px 24px rgba(0,0,0,.18);position:relative;color:var(--ink);max-height:80vh;overflow-y:auto;}
@@ -199,8 +200,8 @@ body.edit-on .shop-add-item-btn{display:block;}
 
 <div class="cover">
   <div class="cover-label">Travel Itinerary</div>
-  <div class="cover-title" onblur="updateCover()">東京五日遊</div>
-  <div class="cover-sub" onblur="updateCover()">December 9–13, 2024</div>
+  <div class="cover-title" contenteditable="false" onblur="updateCover()">東京五日遊</div>
+  <div class="cover-sub" contenteditable="false" onblur="updateCover()">December 9–13, 2024</div>
   <div class="cover-pills" id="coverPills"></div>
 </div>
 
@@ -268,9 +269,58 @@ body.edit-on .shop-add-item-btn{display:block;}
   </div>
   <div class="shop-grid" id="shopGrid"></div>
 
+  <!-- ⑥ 分帳系統 -->
+  <div class="sec-header">
+    <div class="sec-num">⑥</div>
+    <div class="sec-title">旅費分帳系統</div>
+    <div class="sec-actions">
+      <button class="add-btn split-add-btn" onclick="openSplitModal()">＋ 新增開銷</button>
+    </div>
+  </div>
+  <div id="splitSection"></div>
+
   <div style="margin-top:40px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
     <div style="font-size:11px;color:var(--muted);">東京 12/9–12/13 · 森下住宿</div>
     <div style="font-size:11px;color:var(--muted);">所有時間為估算值，請以 Google Maps 實際查詢為準</div>
+  </div>
+</div>
+
+<!-- Split Modal -->
+<div id="splitModalBg" class="modal-bg" onclick="if(event.target===this)closeSplitModal()">
+  <div class="modal" style="max-width:480px;padding:0;overflow:hidden;">
+    <div style="background:var(--ink);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:10px;">
+      <span style="font-size:17px;">💴</span>
+      <span style="font-family:'Noto Serif TC',serif;font-size:15px;font-weight:600;flex:1;" id="splitModalTitle">新增開銷</span>
+      <button onclick="closeSplitModal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;">×</button>
+    </div>
+    <div style="padding:18px 20px 20px;display:flex;flex-direction:column;gap:12px;">
+      <div class="form-row">
+        <label>項目名稱</label>
+        <input type="text" id="sp_name" placeholder="例：迪士尼門票">
+      </div>
+      <div style="display:flex;gap:10px;">
+        <div class="form-row" style="flex:1;">
+          <label>金額（日幣 ¥）</label>
+          <input type="number" id="sp_jpy" placeholder="0" oninput="calcTWD()">
+        </div>
+        <div class="form-row" style="flex:1;">
+          <label>換算台幣（NT$）<span id="rateLabel" style="font-size:10px;color:var(--muted);"></span></label>
+          <input type="number" id="sp_twd" placeholder="自動換算" style="background:var(--cream);" readonly>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>分攤人員（可多選）</label>
+        <div id="sp_members" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;"></div>
+      </div>
+      <div class="form-row">
+        <label>付款人</label>
+        <select id="sp_payer" style="width:100%;"></select>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
+        <button class="modal-btn cancel" onclick="closeSplitModal()">取消</button>
+        <button class="modal-btn primary" onclick="submitSplit()">確認新增</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -365,6 +415,8 @@ const DEFAULT = {
     {name:'Burgers & Fries Sakura_Saku', type:'漢堡', badge:'b-pink', price:'1,000–2,000', addr:'江東区森下 3-11-6', maps:'https://maps.google.com/?q=Burgers+Fries+Sakura_Saku+森下', note:'日式漢堡，輕鬆隨興'},
     {name:'★ Cattlea', type:'咖哩麵包', badge:'b-green', price:'200–400 / 個', addr:'江東区森下 1-6-3', maps:'https://maps.google.com/?q=Cattlea+森下+東京', note:'住宿附近名店，10:00 開始營業，順路必買'},
   ],
+  members: ['Sunny','小美','阿志','小華','阿明','小玲','阿強'],
+  splits: [],
   shopCategories: [
     { icon:'💊', name:'藥妝', color:'#0f6e56', items:[
       {text:'肌研極潤玻尿酸乳液', price:'¥800', checked:false},
@@ -504,6 +556,15 @@ function toggleEdit() {
 function applyEditModeStyles() {
   document.querySelectorAll('[contenteditable]').forEach(el => {
     el.contentEditable = editMode ? 'true' : 'false';
+    if (editMode) {
+      el.style.outline = 'none';
+      el.style.borderBottom = '1.5px dashed var(--accent)';
+      el.style.minWidth = '30px';
+      el.style.cursor = 'text';
+    } else {
+      el.style.borderBottom = '';
+      el.style.cursor = '';
+    }
   });
   const addPill = document.querySelector('#coverPills .add-btn');
   if (addPill) addPill.style.display = editMode ? 'inline-flex' : 'none';
@@ -527,6 +588,7 @@ function render() {
   renderCostRows();
   renderLunch();
   renderShop();
+  renderSplit();
   applyEditModeStyles();
 }
 
@@ -541,11 +603,11 @@ function renderFlights() {
   const tb = document.getElementById('flightBody');
   tb.innerHTML = state.flights.map((f,i) => `
     <tr>
-      <td [contenteditable] onblur="state.flights[${i}].date=this.textContent;saveToFirebase()">${esc(f.date)}</td>
-      <td [contenteditable] onblur="state.flights[${i}].route=this.textContent;saveToFirebase()">${esc(f.route)}</td>
-      <td [contenteditable] onblur="state.flights[${i}].dep=this.textContent;saveToFirebase()"><strong>${esc(f.dep)}</strong></td>
-      <td [contenteditable] onblur="state.flights[${i}].arr=this.textContent;saveToFirebase()"><strong>${esc(f.arr)}</strong></td>
-      <td [contenteditable] onblur="state.flights[${i}].note=this.textContent;saveToFirebase()"><span class="badge ${f.badge||'b-gray'}">${f.badge=='b-red'?'回程':'去程'}</span> ${esc(f.note.replace(/去程|回程/,''))}</td>
+      <td contenteditable="false" onblur="state.flights[${i}].date=this.textContent;saveToFirebase()">${esc(f.date)}</td>
+      <td contenteditable="false" onblur="state.flights[${i}].route=this.textContent;saveToFirebase()">${esc(f.route)}</td>
+      <td contenteditable="false" onblur="state.flights[${i}].dep=this.textContent;saveToFirebase()"><strong>${esc(f.dep)}</strong></td>
+      <td contenteditable="false" onblur="state.flights[${i}].arr=this.textContent;saveToFirebase()"><strong>${esc(f.arr)}</strong></td>
+      <td contenteditable="false" onblur="state.flights[${i}].note=this.textContent;saveToFirebase()"><span class="badge ${f.badge||'b-gray'}">${f.badge=='b-red'?'回程':'去程'}</span> ${esc(f.note.replace(/去程|回程/,''))}</td>
       <td style="width:30px;text-align:center;"><button class="del-btn" onclick="delFlight(${i})">🗑</button></td>
     </tr>`).join('');
 }
@@ -557,8 +619,8 @@ function renderDays() {
       <div class="day-header">
         <div class="day-num">${day.num}</div>
         <div class="day-info">
-          <div class="day-date" [contenteditable] onblur="state.days[${di}].date=this.textContent;saveToFirebase()">${esc(day.date)}</div>
-          <div class="day-theme" [contenteditable] onblur="state.days[${di}].theme=this.textContent;saveToFirebase()">${esc(day.theme)}</div>
+          <div class="day-date" contenteditable="false" onblur="state.days[${di}].date=this.textContent;saveToFirebase()">${esc(day.date)}</div>
+          <div class="day-theme" contenteditable="false" onblur="state.days[${di}].theme=this.textContent;saveToFirebase()">${esc(day.theme)}</div>
         </div>
         <div class="day-actions">
           <button class="add-btn" onclick="openModal('item',{di:${di}})">＋ 新增項目</button>
@@ -577,21 +639,21 @@ function renderItem(item, di, ii) {
   const transport = item.transport ? `
     <div class="tl-transport">
       <div class="tl-transport-icon">${item.transport.split(' ')[0]}</div>
-      <div class="tl-transport-text" [contenteditable] onblur="state.days[${di}].items[${ii}].transport=this.parentElement.children[0].textContent+' '+this.textContent;saveToFirebase()">${esc(item.transport.substring(item.transport.indexOf(' ')+1))}</div>
+      <div class="tl-transport-text" contenteditable="false" onblur="state.days[${di}].items[${ii}].transport=this.parentElement.children[0].textContent+' '+this.textContent;saveToFirebase()">${esc(item.transport.substring(item.transport.indexOf(' ')+1))}</div>
     </div>` : '';
   const links = [
     item.maps ? `<a class="lbtn" href="${item.maps}" target="_blank">Google Maps ↗</a>` : '',
     item.official ? `<a class="lbtn" href="${item.official}" target="_blank">官網 ↗</a>` : '',
     item.tabelog ? `<a class="lbtn" href="${item.tabelog}" target="_blank">Tabelog ↗</a>` : '',
   ].filter(Boolean).join('');
-  const note = item.note ? `<div class="note-box" [contenteditable] onblur="state.days[${di}].items[${ii}].note=this.textContent;saveToFirebase()">${esc(item.note)}</div>` : '';
+  const note = item.note ? `<div class="note-box" contenteditable="false" onblur="state.days[${di}].items[${ii}].note=this.textContent;saveToFirebase()">${esc(item.note)}</div>` : '';
   return `
     <li class="tl-item">
-      <div class="tl-time" [contenteditable] onblur="state.days[${di}].items[${ii}].time=this.textContent;saveToFirebase()">${esc(item.time)}</div>
+      <div class="tl-time" contenteditable="false" onblur="state.days[${di}].items[${ii}].time=this.textContent;saveToFirebase()">${esc(item.time)}</div>
       <div class="tl-dot-col"><div class="tl-dot ${item.dot||''}"></div>${hasLine?'<div class="tl-line"></div>':''}</div>
       <div class="tl-content">
-        <div class="tl-label" [contenteditable] onblur="state.days[${di}].items[${ii}].label=this.textContent;saveToFirebase()">${esc(item.label)}</div>
-        ${item.desc?`<div class="tl-desc" [contenteditable] onblur="state.days[${di}].items[${ii}].desc=this.textContent;saveToFirebase()">${esc(item.desc)}</div>`:''}
+        <div class="tl-label" contenteditable="false" onblur="state.days[${di}].items[${ii}].label=this.textContent;saveToFirebase()">${esc(item.label)}</div>
+        <div class="tl-desc" contenteditable="false" onblur="state.days[${di}].items[${ii}].desc=this.textContent;saveToFirebase()" data-ph="地址／備註">${esc(item.desc||'')}</div>
         ${transport}
         ${links ? `<div class="link-row">${links}</div>` : ''}
         ${note}
@@ -608,9 +670,9 @@ function renderCostCards() {
   g.innerHTML = state.costCards.map((c,i) => `
     <div class="cost-card">
       <button class="del-btn" style="position:absolute;top:6px;right:6px;" onclick="delCostCard(${i})">🗑</button>
-      <div class="cost-label" [contenteditable] onblur="state.costCards[${i}].label=this.textContent;saveToFirebase()">${esc(c.label)}</div>
-      <div class="cost-val" [contenteditable] onblur="state.costCards[${i}].val=this.textContent;saveToFirebase()">${esc(c.val)}</div>
-      <div class="cost-sub" [contenteditable] onblur="state.costCards[${i}].sub=this.textContent;saveToFirebase()">${esc(c.sub)}</div>
+      <div class="cost-label" contenteditable="false" onblur="state.costCards[${i}].label=this.textContent;saveToFirebase()">${esc(c.label)}</div>
+      <div class="cost-val" contenteditable="false" onblur="state.costCards[${i}].val=this.textContent;saveToFirebase()">${esc(c.val)}</div>
+      <div class="cost-sub" contenteditable="false" onblur="state.costCards[${i}].sub=this.textContent;saveToFirebase()">${esc(c.sub)}</div>
     </div>`).join('');
 }
 
@@ -619,11 +681,11 @@ function renderCostRows() {
   const mealColor = {早餐:'b-gold', 午餐:'b-gray', 晚餐:'b-red'};
   tb.innerHTML = state.costRows.map((r,i) => `
     <tr>
-      <td [contenteditable] onblur="state.costRows[${i}].day=this.textContent;saveToFirebase()">${esc(r.day)}</td>
+      <td contenteditable="false" onblur="state.costRows[${i}].day=this.textContent;saveToFirebase()">${esc(r.day)}</td>
       <td><span class="badge ${r.mealBadge||mealColor[r.meal]||'b-gray'}">${esc(r.meal)}</span></td>
-      <td [contenteditable] onblur="state.costRows[${i}].rest=this.textContent;saveToFirebase()">${esc(r.rest)}</td>
-      <td [contenteditable] onblur="state.costRows[${i}].type=this.textContent;saveToFirebase()">${esc(r.type)}</td>
-      <td [contenteditable] onblur="state.costRows[${i}].price=this.textContent;saveToFirebase()">${esc(r.price)}</td>
+      <td contenteditable="false" onblur="state.costRows[${i}].rest=this.textContent;saveToFirebase()">${esc(r.rest)}</td>
+      <td contenteditable="false" onblur="state.costRows[${i}].type=this.textContent;saveToFirebase()">${esc(r.type)}</td>
+      <td contenteditable="false" onblur="state.costRows[${i}].price=this.textContent;saveToFirebase()">${esc(r.price)}</td>
       <td style="width:30px;text-align:center;"><button class="del-btn" onclick="delCostRow(${i})">🗑</button></td>
     </tr>`).join('');
 }
@@ -632,14 +694,14 @@ function renderLunch() {
   const tb = document.getElementById('lunchBody');
   tb.innerHTML = state.lunchOptions.map((l,i) => `
     <tr>
-      <td [contenteditable] onblur="state.lunchOptions[${i}].name=this.textContent;saveToFirebase()"><strong>${esc(l.name)}</strong></td>
+      <td contenteditable="false" onblur="state.lunchOptions[${i}].name=this.textContent;saveToFirebase()"><strong>${esc(l.name)}</strong></td>
       <td><span class="badge ${l.badge||'b-gray'}">${esc(l.type)}</span></td>
-      <td [contenteditable] onblur="state.lunchOptions[${i}].price=this.textContent;saveToFirebase()">${esc(l.price)}</td>
+      <td contenteditable="false" onblur="state.lunchOptions[${i}].price=this.textContent;saveToFirebase()">${esc(l.price)}</td>
       <td>
-        <div [contenteditable] onblur="state.lunchOptions[${i}].addr=this.textContent;saveToFirebase()" style="font-size:12px;color:var(--muted)">${esc(l.addr)}</div>
+        <div contenteditable="false" onblur="state.lunchOptions[${i}].addr=this.textContent;saveToFirebase()" style="font-size:12px;color:var(--muted)">${esc(l.addr)}</div>
         ${l.maps?`<div class="link-row"><a class="lbtn" href="${l.maps}" target="_blank">Maps ↗</a></div>`:''}
       </td>
-      <td [contenteditable] onblur="state.lunchOptions[${i}].note=this.textContent;saveToFirebase()" style="font-size:12px;color:var(--muted)">${esc(l.note)}</td>
+      <td contenteditable="false" onblur="state.lunchOptions[${i}].note=this.textContent;saveToFirebase()" style="font-size:12px;color:var(--muted)">${esc(l.note)}</td>
       <td style="width:30px;text-align:center;"><button class="del-btn" onclick="delLunch(${i})">🗑</button></td>
     </tr>`).join('');
 }
@@ -654,15 +716,15 @@ function renderShop() {
     const items = cat.items ? cat.items.map((item, ii) => `
       <li class="shop-item">
         <div class="shop-item-check ${item.checked?'checked':''}" onclick="toggleCheck(${ci},${ii})"></div>
-        <span class="shop-item-text" [contenteditable] onblur="state.shopCategories[${ci}].items[${ii}].text=this.textContent;saveToFirebase()">${esc(item.text)}</span>
-        <span class="shop-item-price" [contenteditable] onblur="state.shopCategories[${ci}].items[${ii}].price=this.textContent;saveToFirebase()">${esc(item.price)}</span>
+        <span class="shop-item-text" contenteditable="false" onblur="state.shopCategories[${ci}].items[${ii}].text=this.textContent;saveToFirebase()">${esc(item.text)}</span>
+        <span class="shop-item-price" contenteditable="false" onblur="state.shopCategories[${ci}].items[${ii}].price=this.textContent;saveToFirebase()">${esc(item.price)}</span>
         <button class="del-btn" onclick="delShopItem(${ci},${ii})">🗑</button>
       </li>`).join('') : '';
     return `
       <div class="shop-cat">
         <div class="shop-cat-header" style="background:${cat.color||'var(--ink)'}">
           <span class="shop-cat-icon">${cat.icon||'📦'}</span>
-          <span class="shop-cat-name" [contenteditable] onblur="state.shopCategories[${ci}].name=this.textContent;saveToFirebase()">${esc(cat.name)}</span>
+          <span class="shop-cat-name" contenteditable="false" onblur="state.shopCategories[${ci}].name=this.textContent;saveToFirebase()">${esc(cat.name)}</span>
           <button class="del-btn" style="color:rgba(255,255,255,.6);display:none;" onclick="delShopCat(${ci})">🗑</button>
         </div>
         <div class="shop-progress"><div class="shop-progress-bar" style="width:${pct}%"></div></div>
@@ -815,6 +877,197 @@ document.addEventListener('blur', function(e) {
 // ===================== INITIALIZATION =====================
 loadFromFirebase();
 startPolling();
+
+// ===================== 分帳系統 =====================
+let splitRate = null;
+
+async function fetchRate() {
+  try {
+    const res = await fetch('https://open.er-api.com/v6/latest/JPY');
+    const data = await res.json();
+    if (data && data.rates && data.rates.TWD) {
+      splitRate = data.rates.TWD;
+      document.getElementById('rateLabel').textContent = `(1¥≈${splitRate.toFixed(3)}NT$)`;
+    }
+  } catch(e) {
+    splitRate = 0.22;
+    document.getElementById('rateLabel') && (document.getElementById('rateLabel').textContent = '(離線匯率 1¥≈0.22NT$)');
+  }
+}
+
+function calcTWD() {
+  const jpy = parseFloat(document.getElementById('sp_jpy').value) || 0;
+  const rate = splitRate || 0.22;
+  document.getElementById('sp_twd').value = jpy ? Math.round(jpy * rate) : '';
+}
+
+function openSplitModal() {
+  fetchRate();
+  // render member checkboxes
+  const members = (state.members && state.members.length) ? state.members : ['Sunny','小美','阿志','小華','阿明','小玲','阿強'];
+  const memberDiv = document.getElementById('sp_members');
+  memberDiv.innerHTML = members.map((m,i) => `
+    <label style="display:flex;align-items:center;gap:5px;background:var(--cream);border:1px solid var(--border);border-radius:99px;padding:4px 12px;cursor:pointer;font-size:13px;">
+      <input type="checkbox" value="${m}" checked style="accent-color:var(--accent);"> ${m}
+    </label>`).join('');
+  const payerSel = document.getElementById('sp_payer');
+  payerSel.innerHTML = members.map(m => `<option value="${m}">${m}</option>`).join('');
+  document.getElementById('sp_name').value = '';
+  document.getElementById('sp_jpy').value = '';
+  document.getElementById('sp_twd').value = '';
+  document.getElementById('splitModalTitle').textContent = '新增開銷';
+  document.getElementById('splitModalBg').classList.add('open');
+}
+
+function closeSplitModal() {
+  document.getElementById('splitModalBg').classList.remove('open');
+}
+
+function submitSplit() {
+  const name = document.getElementById('sp_name').value.trim();
+  const jpy = parseFloat(document.getElementById('sp_jpy').value) || 0;
+  const twd = parseFloat(document.getElementById('sp_twd').value) || Math.round(jpy * (splitRate||0.22));
+  const payer = document.getElementById('sp_payer').value;
+  const checked = [...document.querySelectorAll('#sp_members input:checked')].map(el => el.value);
+  if (!name || !jpy || !checked.length) { alert('請填寫項目名稱、金額並選擇至少一位成員'); return; }
+  if (!state.splits) state.splits = [];
+  state.splits.push({ name, jpy, twd, payer, members: checked, id: Date.now() });
+  closeSplitModal();
+  renderSplit();
+  saveToFirebase();
+}
+
+function delSplit(id) {
+  state.splits = (state.splits||[]).filter(s => s.id !== id);
+  renderSplit();
+  saveToFirebase();
+}
+
+function renderSplit() {
+  const el = document.getElementById('splitSection');
+  if (!el) return;
+  const splits = state.splits || [];
+  const members = state.members || ['Sunny','小美','阿志','小華','阿明','小玲','阿強'];
+
+  // calc per-person balance
+  const balance = {};
+  members.forEach(m => balance[m] = 0);
+  splits.forEach(s => {
+    const share = s.twd / s.members.length;
+    s.members.forEach(m => { if(balance[m]!==undefined) balance[m] -= share; });
+    if(balance[s.payer]!==undefined) balance[s.payer] += s.twd;
+  });
+
+  const totalJPY = splits.reduce((a,s)=>a+s.jpy,0);
+  const totalTWD = splits.reduce((a,s)=>a+s.twd,0);
+
+  el.innerHTML = `
+    <!-- 設定人員 -->
+    <div style="margin-bottom:14px;background:var(--cream);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+      <div style="font-size:12px;color:var(--muted);font-weight:500;margin-bottom:8px;">成員名單（點名字可編輯）</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+        ${(state.members||members).map((m,i)=>`
+          <span style="background:#fff;border:1px solid var(--border);border-radius:99px;padding:4px 10px;font-size:13px;display:flex;align-items:center;gap:5px;">
+            ${m}
+            <button onclick="delMember(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;">✕</button>
+          </span>`).join('')}
+        <button onclick="addMember()" style="background:var(--ink);color:#fff;border:none;border-radius:99px;padding:4px 12px;font-size:12px;cursor:pointer;">＋ 新增</button>
+      </div>
+    </div>
+
+    <!-- 開銷列表 -->
+    ${splits.length === 0 ? `<div style="text-align:center;padding:28px;color:var(--muted);font-size:13px;">還沒有任何開銷，點「＋ 新增開銷」開始記帳</div>` : `
+    <div style="overflow-x:auto;margin-bottom:14px;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:var(--cream);">
+          <th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);">項目</th>
+          <th style="padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);">日幣 ¥</th>
+          <th style="padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);">台幣 NT$</th>
+          <th style="padding:8px 12px;text-align:center;border-bottom:1px solid var(--border);">付款人</th>
+          <th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);">分攤成員</th>
+          <th style="padding:8px 4px;border-bottom:1px solid var(--border);"></th>
+        </tr></thead>
+        <tbody>
+          ${splits.map(s=>`<tr style="border-bottom:0.5px solid var(--border);">
+            <td style="padding:9px 12px;font-weight:500;">${esc(s.name)}</td>
+            <td style="padding:9px 12px;text-align:right;">¥${s.jpy.toLocaleString()}</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--teal);">NT$${s.twd.toLocaleString()}</td>
+            <td style="padding:9px 12px;text-align:center;"><span style="background:var(--accent-light);color:var(--accent);border-radius:99px;padding:2px 8px;font-size:11px;">${esc(s.payer)}</span></td>
+            <td style="padding:9px 12px;font-size:11px;color:var(--muted);">${s.members.join('、')}</td>
+            <td style="padding:9px 4px;"><button onclick="delSplit(${s.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;">🗑</button></td>
+          </tr>`).join('')}
+          <tr style="background:var(--cream);font-weight:600;">
+            <td style="padding:9px 12px;">合計</td>
+            <td style="padding:9px 12px;text-align:right;">¥${totalJPY.toLocaleString()}</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--teal);">NT$${totalTWD.toLocaleString()}</td>
+            <td colspan="3"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 個人結算 -->
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--ink);">個人結算</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:16px;">
+      ${members.map(m=>{
+        const b = Math.round(balance[m]||0);
+        const color = b > 0 ? '#0f6e56' : b < 0 ? '#c0392b' : '#7a736a';
+        const bg = b > 0 ? '#eaf3de' : b < 0 ? '#fbeaea' : '#f2ede4';
+        const label = b > 0 ? `待收 NT$${b}` : b < 0 ? `待付 NT$${Math.abs(b)}` : '已結清';
+        return `<div style="background:${b>0?'#eaf3de':b<0?'#fbeaea':'#f2ede4'};border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px;">${esc(m)}</div>
+          <div style="font-size:12px;color:${color};font-weight:600;">${label}</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <!-- 誰要付給誰 -->
+    ${(()=>{
+      // Debt settlement algorithm (minimize transactions)
+      const debtors = members.map(m=>({name:m, amt:Math.round(balance[m]||0)}));
+      const payers = debtors.filter(d=>d.amt>0).sort((a,b)=>b.amt-a.amt); // 待收
+      const owes = debtors.filter(d=>d.amt<0).sort((a,b)=>a.amt-b.amt);   // 待付
+      const txns = [];
+      const p = payers.map(x=>({...x}));
+      const o = owes.map(x=>({...x}));
+      let pi=0, oi=0;
+      while(pi<p.length && oi<o.length){
+        const amount = Math.min(p[pi].amt, -o[oi].amt);
+        if(amount>0) txns.push({from:o[oi].name, to:p[pi].name, amt:amount});
+        p[pi].amt -= amount;
+        o[oi].amt += amount;
+        if(p[pi].amt===0) pi++;
+        if(o[oi].amt===0) oi++;
+      }
+      if(txns.length===0) return '<div style="padding:12px;text-align:center;color:var(--muted);font-size:13px;">✓ 目前無需轉帳</div>';
+      return '<div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--ink);">轉帳清單</div>' +
+        '<div style="display:flex;flex-direction:column;gap:8px;">' +
+        txns.map(t=>`
+          <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;">
+            <span style="font-size:13px;font-weight:600;color:var(--accent);">${esc(t.from)}</span>
+            <span style="font-size:12px;color:var(--muted);">→ 轉帳給 →</span>
+            <span style="font-size:13px;font-weight:600;color:var(--teal);">${esc(t.to)}</span>
+            <span style="margin-left:auto;font-size:14px;font-weight:700;color:var(--ink);">NT$${t.amt.toLocaleString()}</span>
+          </div>`).join('') + '</div>';
+    })()}`}
+  `;
+}
+
+function addMember() {
+  const name = prompt('輸入新成員名字：');
+  if (!name || !name.trim()) return;
+  if (!state.members) state.members = [];
+  state.members.push(name.trim());
+  renderSplit();
+  saveToFirebase();
+}
+
+function delMember(i) {
+  if (!state.members) return;
+  state.members.splice(i, 1);
+  renderSplit();
+  saveToFirebase();
+}
 
 // ===================== 景點必買清單功能 =====================
 let currentModalCtx = { di: null, ii: null };
