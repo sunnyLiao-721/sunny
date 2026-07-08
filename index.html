@@ -119,6 +119,10 @@ body.edit-on .add-btn{display:inline-flex;align-items:center;gap:4px;}
 .del-btn:hover{opacity:1;background:var(--accent-light);}
 body.edit-on .del-btn{display:inline-block;}
 
+/* SHOPPING SPOTS */
+.spot-day-block { margin-bottom: 16px; }
+.spot-day-title { font-size: 12px; font-weight: 500; letter-spacing: .07em; color: var(--muted); text-transform: uppercase; padding: 6px 12px; background: var(--cream); border-radius: 6px 6px 0 0; border: 1px solid var(--border); border-bottom: none; }
+
 /* SHOPPING LIST */
 .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:10px;}
 .shop-cat{border:1px solid var(--border);border-radius:99px;border:1px solid var(--border);border-radius:9px;overflow:hidden;}
@@ -279,6 +283,16 @@ body.edit-on .shop-add-item-btn{display:block;}
   </div>
   <div id="splitSection"></div>
 
+  <!-- ⑦ 代逛店家 -->
+  <div class="sec-header">
+    <div class="sec-num">⑦</div>
+    <div class="sec-title">待逛店家</div>
+    <div class="sec-actions">
+      <button class="add-btn" onclick="openModal('shopSpot')">＋ 新增店家</button>
+    </div>
+  </div>
+  <div id="shopSpotsContainer"></div>
+
   <div style="margin-top:40px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
     <div style="font-size:11px;color:var(--muted);">東京 12/9–12/13 · 森下住宿</div>
     <div style="font-size:11px;color:var(--muted);">所有時間為估算值，請以 Google Maps 實際查詢為準</div>
@@ -354,7 +368,7 @@ const DEFAULT = {
       {time:'10:40', dot:'gold', label:'✈ 抵達成田機場', desc:'', transport:'🚆 Skyliner 成田→日暮里（41 min）＋ Metro 日暮里→森下（20 min）＋ 步行（5 min）｜合計約 70 分'},
       {time:'12:30', dot:'', label:'🏠 森下住宿寄放行李', desc:'', transport:'🚆 Metro 大江戶線 森下→月島→大手町（約 15 min）＋步行→東京車站（5 min）｜合計約 20 分'},
       {time:'13:00', dot:'gold', label:'🍜 午餐：東京車站周邊（A/B 二選一）', desc:'方案A：六厘舍 沾麵｜東京都千代田区丸の内 1-9-1 東京駅一番街 B1F（東京拉麵街）｜¥1,000–1,500｜💴 只收現金＋交通系IC（不收信用卡），請備妥現金｜常有排隊建議避開正午尖峰\n方案B：松戸富田麺絆 沾麵｜東京都千代田区丸の内 2-7-2 KITTE丸の内 B1F｜¥1,000–2,000｜✅ 可刷卡｜東京車站步行約 2–4 分', transport:'', maps:'https://maps.google.com/?q=六厘舍+東京駅一番街+B1F', note:'六厘舍：東京車站八重洲北口地下 B1F 東京ラーメンストリート内｜松戸富田麺絆：東京車站丸の内南口前 KITTE B1F'},
-      {time:'14:30', dot:'teal', label:'🏛 東京車站周邊漫步', desc:'丸の内仲通り、KITTE 丸の内、三菱一号館廣場等', transport:'🚶 步行即可'},
+      {time:'14:30', dot:'teal', label:'🏛 東京車站周邊漫步', desc:'丸の内仲通り、KITTE 丸の内、三菱一号館廣場等', transport:'🚶 步行即可', buys:['一保堂茶舗 抹茶粉（宇治抹茶，料理/點茶用）']},
       {time:'15:40', dot:'', label:'⏰ 前往票券窗口取票', desc:'丸の内三菱大廈 1F 票券窗口｜16:00 出發前 20 分鐘必須完成取票，逾時座位自動取消', transport:'🚶 東京車站丸の内北口步行約 3 分'},
       {time:'16:00', dot:'teal', label:'🚌 SKY BUS 東京黃昏巡遊路線（Tokyo Twilight Course）出發', desc:'路線：銀座 → 東京鐵塔 → 彩虹大橋 → 台場 → 築地 → 回丸の内｜所需時間約 50 分｜大人 ¥2,600 / 小孩 ¥1,300｜12/9 日落約 16:28，行經東京鐵塔時剛好日落最美！', transport:'🚶 乘車處：丸の内三菱大廈前 1 號站（〒100-0005 東京都千代田区丸の内 2-5-2）｜東京車站丸の内南口步行約 3 分', maps:'https://maps.google.com/?q=丸の内三菱ビルディング+東京', official:'https://book.skybus.jp/top/products/54adb468-6b81-5230-8ae8-a147f0b0cc7c', note:'⚠️ 15:40 前須至丸の内三菱大廈 1F 票券窗口取票，逾時座位自動取消｜⚠️ 無車內語音導覽（僅日語巴士導遊）｜⚠️ 建議出發前 1 個月至官網預購'},
       {time:'17:00', dot:'', label:'🚉 SKY BUS 抵達 · 步行至二重橋前站', desc:'從丸の内三菱大廈步行約 3–4 分鐘到地鐵二重橋前站', transport:''},
@@ -364,25 +378,26 @@ const DEFAULT = {
       {time:'21:00', dot:'', label:'🛒 LIFE 菊川店 採購', desc:'東京都墨田区菊川 1-18-5｜森下站 A5 出口步行約 5 分 / 菊川站 A1 出口步行約 4 分｜營業至 24:00', transport:'🚆 赤坂→森下（Metro 千代田線→大江戶線 約 20 min）＋步行（約 5 min）', maps:'https://maps.google.com/?q=ライフ菊川店+東京都墨田区菊川1-18-5'},
     ]},
     { num:2, date:'12 / 10 (Tue)', theme:'迪士尼奇幻之旅', items:[
-      {time:'', dot:'', label:'🎡 迪士尼樂園', desc:'方案A：09:00出發→12:00入園｜方案B：07:00出發（含早餐）→09:00入園→園內午餐', transport:'🚆 森下→押上（Metro 半蔵門線 8 min）→換乘步行（15 min）→新木場→舞濱（JR 京葉線 10 min）＋步行入口（5 min）｜合計約 40 分'},
+      {time:'', dot:'', label:'🎡 迪士尼樂園', desc:'方案A：09:00出發→12:00入園｜方案B：07:00出發（含早餐）→09:00入園→園內午餐', transport:'🚆 森下→押上（Metro 半蔵門線 8 min）→換乘步行（15 min）→新木場→舞濱（JR 京葉線 10 min）＋步行入口（5 min）｜合計約 40 分', buys:['Hungry beer咖哩（午餐）','爆米花米奇食物夾']},
       {time:'煙火後', dot:'', label:'🎡 出園返回森下', desc:'', transport:'🚆 舞濱→新木場（JR 京葉線 10 min）→森下（Metro 有樂町線 20 min）＋步行（5 min）｜合計約 40 分'},
       {time:'21:30', dot:'red', label:'🍗 晚餐：串燒（森下）¥2,000–3,000', desc:'Kushiyaki Gen 森下店 或 森下 鳥満', transport:'🚶 森下站步行約 3–8 min', maps:'https://maps.google.com/?q=串焼げん+森下+東京'},
     ]},
     { num:3, date:'12 / 11 (Wed)', theme:'豪德寺・表參道・新宿', items:[
       {time:'07:30', dot:'', label:'🚉 森下站出發', desc:'', transport:''},
-      {time:'08:30', dot:'teal', label:'🐱 豪德寺（招財貓）', desc:'', transport:'🚆 Metro 半蔵門線 森下→渋谷（20 min）＋小田急線→豪德寺（10 min）＋步行（7 min）｜合計約 40 分'},
+      {time:'08:30', dot:'teal', label:'🐱 豪德寺（招財貓）', desc:'', transport:'🚆 Metro 半蔵門線 森下→渋谷（20 min）＋小田急線→豪德寺（10 min）＋步行（7 min）｜合計約 40 分', buys:['招財貓']},
       {time:'09:30', dot:'gold', label:'☕ 早餐：Crisscross（南青山）¥2,000–3,000', desc:'東京都港区南青山 5-7-17 フロム南青山 1F', transport:'🚆 小田急線 豪德寺→表参道（20 min）＋步行→南青山（8 min）｜合計約 30 分', maps:'https://maps.google.com/?q=Crisscross+南青山+東京'},
       {time:'10:00', dot:'', label:'🛍 表參道精品大街', desc:'', transport:'🚶 步行 南青山→表参道（5 min）'},
       {time:'12:30', dot:'gold', label:'🍜 午餐：AFURI 原宿店 ¥1,000–2,000', desc:'東京都渋谷区神宮前 6-35-3 原宿 WITH HARAJUKU 1F｜✅ 完全無現金（信用卡／電子錢包／PayPay 均可）', transport:'🚶 表参道→原宿步行（10 min）', maps:'https://maps.google.com/?q=AFURI+原宿+東京', official:'https://afuri.com/'},
-      {time:'14:00', dot:'', label:'👟 裏原宿潮牌 → 新宿百貨', desc:'', transport:'🚆 JR 山手線 原宿→新宿（6 min）＋步行百貨（5 min）｜合計約 12 分'},
+      {time:'14:00', dot:'', label:'👟 裏原宿潮牌 → 新宿百貨', desc:'', transport:'🚆 JR 山手線 原宿→新宿（6 min）＋步行百貨（5 min）｜合計約 12 分', buys:['beams招財貓', '伊勢丹 B1F 抹茶粉（一保堂・丸久小山園等老字號）']},
       {time:'18:00', dot:'red', label:'🥩 晚餐：やきにく亭 六歌仙 新宿西口本店 ¥10,000–15,000', desc:'東京都新宿区西新宿 1-10-2 110ビル 10F｜新宿站南口步行約 3 分、京王百貨店前｜食べ放題コース（燒肉・涮涮鍋・壽喜燒）｜11:00–23:00（L.O. 22:30）｜✅ 可刷信用卡', transport:'🚶 新宿站南口步行約 3 分', maps:'https://maps.google.com/?q=六歌仙+新宿西口本店+東京都新宿区西新宿1-10-2', official:'https://rokkasen.co.jp/jp/', note:'⚠️ 12月期間限定加碼螃蟹吃到飽！建議提前預約'},
     ]},
     { num:4, date:'12 / 12 (Thu)', theme:'淺草・銀座・澀谷', items:[
       {time:'08:30', dot:'gold', label:'☕ 早餐：Pelican Cafe（淺草）', desc:'東京都台東区寿 3-9-11 ／ 09:00 開始營業，可先散步再進店', transport:'🚆 Metro 大江戶線 森下→蔵前（6 min）＋步行→Pelican（10 min）｜合計約 18 min', maps:'https://maps.google.com/?q=Pelican+Cafe+浅草+東京'},
-      {time:'10:00', dot:'teal', label:'⛩ 淺草寺雷門拍照', desc:'', transport:'🚶 步行 Pelican Cafe→淺草寺（10 min）'},
-      {time:'11:30', dot:'', label:'📷 晴空塔周邊', desc:'', transport:'🚶 淺草寺→吾妻橋→晴空塔（15 min）'},
-      {time:'13:00', dot:'gold', label:'🍔 午餐：Shake Shack 銀座店', desc:'東京都中央区銀座 6-10-1 GINZA SIX B2F', transport:'🚆 Metro 銀座線 浅草→銀座（20 min）＋步行（5 min）｜合計約 25 min', maps:'https://maps.google.com/?q=Shake+Shack+銀座+GINZA+SIX'},
-      {time:'14:30', dot:'', label:'🛍 銀座精品區 → 澀谷', desc:'', transport:'🚆 Metro 半蔵門線 銀座→渋谷（17 min）＋步行（5 min）｜合計約 22 min'},
+      {time:'10:00', dot:'teal', label:'⛩ 淺草寺雷門拍照', desc:'', transport:'🚶 步行 Pelican Cafe→淺草寺（10 min）', buys:['八十八良葉舎 抹茶粉伴手禮（半焼抹茶 ¥750）']},
+      {time:'11:00', dot:'', label:'📷 晴空塔周邊', desc:'', transport:'🚶 淺草寺→吾妻橋→晴空塔（15 min）'},
+      {time:'11:30', dot:'teal', label:'⛩ 小網神社（東京最強能量神社）', desc:'東京都中央区日本橋小網町 16-23｜財運・強運・厄除｜⚠️ 平日也需排隊 20–40 分，請預留時間｜09:00–17:00', transport:'🚆 淺草→三越前（Metro 銀座線 約 15 min）＋步行→小網神社（約 8 min）｜合計約 25 min', maps:'https://maps.google.com/?q=小網神社+東京都中央区日本橋小網町16-23', note:'⚠️ 帶護照可退稅｜拜完可步行 10 分鐘到銀座 Shake Shack 午餐'},
+      {time:'13:00', dot:'gold', label:'🍔 午餐：Shake Shack 銀座店', desc:'東京都中央区銀座 6-10-1 GINZA SIX B2F', transport:'🚶 小網神社→銀座步行約 10 min', maps:'https://maps.google.com/?q=Shake+Shack+銀座+GINZA+SIX'},
+      {time:'14:30', dot:'', label:'🛍 銀座精品區 → 澀谷', desc:'', transport:'🚆 Metro 半蔵門線 銀座→渋谷（17 min）＋步行（5 min）｜合計約 22 min', buys:['beams招財貓', 'LOFT 澀谷 抹茶粉（多品牌選擇）']},
       {time:'20:00', dot:'red', label:'🍱 晚餐：新潟カツ丼タレカツ 渋谷店', desc:'東京都渋谷区道玄坂 1-5-9 ザ・レンガビル 1F｜渋谷站步行約 3 分｜營業時間 11:00–22:30（L.O. 22:00）｜¥1,000–1,500｜✅ 可刷信用卡', transport:'🚶 渋谷站から步行約 3 分', maps:'https://maps.google.com/?q=新潟カツ丼タレカツ+渋谷店+東京都渋谷区道玄坂1-5-9', official:'https://www.tarekatsu.jp/map/%E6%B8%8B%E8%B0%B7%E5%BA%97/', tabelog:'https://tabelog.com/en/tokyo/A1303/A130301/13185513/'},
     ]},
     { num:5, date:'12 / 13 (Fri)', theme:'秋葉原最後補貨・返台', items:[
@@ -390,7 +405,7 @@ const DEFAULT = {
       {time:'12:00', dot:'gold', label:'🍛 午餐：秋葉原（牛村炸牛排¥2,000–3,000 / SAMA湯咖哩¥1,000–2,000）', desc:'', transport:'🚆 JR 山手線 上野→秋葉原（4 min）＋步行（5 min）｜合計約 10 min'},
       {time:'14:00', dot:'teal', label:'⚡ 秋葉原電玩動漫 → 多慶屋補貨', desc:'零食、藥妝、動漫周邊', transport:''},
       {time:'16:30', dot:'', label:'⏰ 最晚出發！返京成上野取行李', desc:'', transport:'🚆 JR 山手線 秋葉原→上野（4 min）＋步行→京成上野（5 min）｜合計約 10 min'},
-      {time:'17:00', dot:'', label:'🚆 Skyliner 京成上野 → 成田機場', desc:'約 41 分鐘直達', transport:''},
+      {time:'17:00', dot:'', label:'🚆 Skyliner 京成上野 → 成田機場', desc:'約 41 分鐘直達｜抵達後可在機場免稅區採購', transport:'', note:'⚠️ ROYCE 生巧克力位於安檢後免稅區，需入關後才能買｜成田機場第一・二航廈均有設點｜建議抵達機場先完成 check-in 及安檢，入關後再前往購買', buys:['ROYCE 生巧克力（成田機場免稅店）']},
       {time:'19:55', dot:'red', label:'✈ 起飛返台灣', desc:'', transport:''},
     ]},
   ],
@@ -423,42 +438,27 @@ const DEFAULT = {
   ],
   members: ['Sunny','小美','阿志','小華','阿明','小玲','阿強'],
   splits: [],
+  shopSpots: [
+    { day:'Day 3', spots:[
+      {name:'Tamitu（蜂蜜專門店）', addr:'東京都渋谷区神宮前 5-10-1 GYRE B1F', note:'日本蜂蜜品牌，可試喝 Herbal Honey，11:00–20:00', maps:'https://maps.google.com/?q=Tamitu+GYRE+表参道+東京都渋谷区神宮前5-10-1', checked:false},
+      {name:'AMORE 表參道店', addr:'東京都渋谷区神宮前 5-1-15 CH ビル 1F', note:'二手精品｜香奈兒博物館美譽，Hermès・LV・Dior・Celine｜11:00–20:00', maps:'https://maps.google.com/?q=AMORE+表参道+東京都渋谷区神宮前5-1-15', checked:false},
+      {name:'KOMEHYO 新宿店', addr:'東京都新宿区新宿 3-19-2 猪山第2ビル B1F–4F', note:'二手精品｜70年老字號，短夾小皮件最豐富，女生館必逛｜11:00–20:00｜六歌仙晚餐前可順逛', maps:'https://maps.google.com/?q=KOMEHYO+新宿店+東京都新宿区新宿3-19-2', checked:false},
+    ]},
+    { day:'Day 4', spots:[
+      {name:'浅草茶屋 たばねのし', addr:'東京都台東区浅草 2-7-7', note:'和クレープ專門店｜掛川抹茶布蕾クレープ ¥1,190｜平日 11:00–18:00 / 土日祝 10:00–19:00', maps:'https://maps.google.com/?q=浅草茶屋たばねのし+東京都台東区浅草2-7-7', checked:false},
+      {name:'八十八 浅草（八十八良葉舎）', addr:'東京都台東区花川戸 2-14-3', note:'京都名店二號店｜抹茶拿鐵・浅草限定抹茶布丁｜09:00–17:00｜浅草站 7 番出口步行 5 分', maps:'https://maps.google.com/?q=八十八浅草+東京都台東区花川戸2-14-3', checked:false},
+      {name:'BRAND OFF 銀座店', addr:'東京都中央区銀座 5-7-10', note:'二手精品｜4層樓，Hermès・Chanel・LV・Gucci・Celine｜短夾小皮件品項齊｜11:00–20:00', maps:'https://maps.google.com/?q=BRAND+OFF+銀座店+東京都中央区銀座5-7-10', checked:false},
+      {name:'ALLU 銀座店', addr:'東京都中央区銀座 5-3-14', note:'二手精品｜精品選品店風格，陳列漂亮，可與 BRAND OFF 連逛｜11:00–20:00', maps:'https://maps.google.com/?q=ALLU+銀座店+東京都中央区銀座5-3-14', checked:false},
+      {name:'八十八 渋谷（八十八良葉舎）', addr:'東京都渋谷区神山町 3-8 AISKビル 1F', note:'京都名店澀谷店｜抹茶拿鐵・渋谷限定八十八最中（抹茶餡最中 ¥400）｜08:00–18:00｜奧澀谷神山通り，代々木公園步行 5 分', maps:'https://maps.google.com/?q=八十八渋谷+東京都渋谷区神山町3-8', checked:false},
+    ]},
+  ],
   shopCategories: [
-    { icon:'💊', name:'藥妝', color:'#0f6e56', items:[
-      {text:'肌研極潤玻尿酸乳液', price:'¥800', checked:false},
-      {text:'曼秀雷敦潤唇膏', price:'¥300', checked:false},
-      {text:'HABA 角鯊烷精華油', price:'¥3,200', checked:false},
-      {text:'龍角散喉糖', price:'¥400', checked:false},
-      {text:'撒隆巴斯貼布', price:'¥600', checked:false},
-    ]},
-    { icon:'🍫', name:'零食', color:'#8B6914', items:[
-      {text:'白色戀人（白巧克力）', price:'¥1,500', checked:false},
-      {text:'東京バナナ', price:'¥900', checked:false},
-      {text:'抹茶 KitKat', price:'¥600', checked:false},
-      {text:'柿の種（海苔口味）', price:'¥400', checked:false},
-      {text:'Calbee 薯條三兄弟', price:'¥500', checked:false},
-    ]},
-    { icon:'👟', name:'潮流服飾', color:'#185fa5', items:[
-      {text:'裏原宿限定 Tee', price:'¥5,000↑', checked:false},
-      {text:'BEAMS 聯名款', price:'¥8,000↑', checked:false},
-      {text:'Supreme Japan 限定', price:'¥10,000↑', checked:false},
-    ]},
-    { icon:'🎮', name:'電玩動漫', color:'#3C3489', items:[
-      {text:'Switch 遊戲片（日版）', price:'¥5,000↑', checked:false},
-      {text:'Pokémon 周邊', price:'¥1,000↑', checked:false},
-      {text:'Jump Shop 限定品', price:'¥500↑', checked:false},
-      {text:'多慶屋 扭蛋', price:'¥200/次', checked:false},
-    ]},
-    { icon:'🏠', name:'生活雜貨', color:'#c0392b', items:[
-      {text:'無印良品 旅行組', price:'¥1,500', checked:false},
-      {text:'DAISO 收納小物', price:'¥110/個', checked:false},
-      {text:'CanDo 廚房用品', price:'¥110/個', checked:false},
-    ]},
-    { icon:'🎁', name:'伴手禮', color:'#72243e', items:[
-      {text:'淺草人形燒', price:'¥800', checked:false},
-      {text:'東京鐵塔限定馬克杯', price:'¥1,200', checked:false},
-      {text:'迪士尼限定品', price:'¥1,000↑', checked:false},
-    ]},
+    { icon:'💊', name:'藥妝', color:'#0f6e56', items:[]},
+    { icon:'🍫', name:'零食', color:'#8B6914', items:[]},
+    { icon:'👟', name:'潮流服飾', color:'#185fa5', items:[]},
+    { icon:'🎮', name:'電玩動漫', color:'#3C3489', items:[]},
+    { icon:'🏠', name:'生活雜貨', color:'#c0392b', items:[]},
+    { icon:'🎁', name:'伴手禮', color:'#72243e', items:[]},
   ],
 };
 
@@ -480,6 +480,9 @@ async function loadFromFirebase() {
     const data = await res.json();
     if (data) {
       state = data;
+      // migrate: 補上新增欄位
+      if (!state.shopSpots) state.shopSpots = JSON.parse(JSON.stringify(DEFAULT.shopSpots));
+      if (!state.shopCategories) state.shopCategories = JSON.parse(JSON.stringify(DEFAULT.shopCategories));
     } else {
       state = JSON.parse(JSON.stringify(DEFAULT));
       await saveToFirebase(); // 初始化 Firebase 資料
@@ -595,6 +598,7 @@ function render() {
   renderLunch();
   renderShop();
   renderSplit();
+  renderShopSpots();
   applyEditModeStyles();
 }
 
@@ -820,12 +824,25 @@ const FIELDS = {
   shopItem: [
     {id:'text', label:'品項名稱', ph:'資生堂防曬乳'},
     {id:'price', label:'價格（選填）', ph:'¥1,200'}
-  ]
+  ],
+  shopSpot: [
+    {id:'day', label:'天數', type:'select', opts:[['Day 1','Day 1'],['Day 2','Day 2'],['Day 3','Day 3'],['Day 4','Day 4'],['Day 5','Day 5']]},
+    {id:'name', label:'店家名稱', ph:'伊勢丹 新宿'},
+    {id:'addr', label:'地址', ph:'東京都新宿区新宿 3-14-1'},
+    {id:'note', label:'備註', ph:'B1F 食品伴手禮必逛'},
+    {id:'maps', label:'Google Maps 連結', ph:'https://maps.google.com/...'},
+  ],
+  shopSpotItem: [
+    {id:'name', label:'店家名稱', ph:'新店家'},
+    {id:'addr', label:'地址', ph:'東京都...'},
+    {id:'note', label:'備註', ph:''},
+    {id:'maps', label:'Google Maps 連結', ph:'https://maps.google.com/...'},
+  ],
 };
 
 function openModal(type, ctx={}) {
   modalType = type; modalCtx = ctx;
-  const titles = {flight:'新增航班', day:'新增整天行程', item:'新增行程項目', costItem:'新增費用卡片', costRow:'新增費用明細', lunch:'新增午餐選項', pill:'新增封面標籤', shopCat:'新增必買分類', shopItem:'新增品項'};
+  const titles = {flight:'新增航班', day:'新增整天行程', item:'新增行程項目', costItem:'新增費用卡片', costRow:'新增費用明細', lunch:'新增午餐選項', pill:'新增封面標籤', shopCat:'新增必買分類', shopItem:'新增品項', shopSpot:'新增代逛店家', shopSpotItem:'新增店家'};
   document.getElementById('modalTitle').textContent = titles[type] || '新增';
   const fields = FIELDS[type] || [];
   document.getElementById('modalFields').innerHTML = fields.map(f => {
@@ -865,6 +882,15 @@ function submitModal() {
     const ci = modalCtx.ci !== undefined ? modalCtx.ci : state.shopCategories.length-1;
     if(!state.shopCategories[ci].items) state.shopCategories[ci].items = [];
     state.shopCategories[ci].items.push({text:get('text'), price:get('price'), checked:false});
+  } else if (modalType === 'shopSpot') {
+    const dayLabel = get('day');
+    if (!state.shopSpots) state.shopSpots = [];
+    let dayBlock = state.shopSpots.find(d => d.day === dayLabel);
+    if (!dayBlock) { dayBlock = {day: dayLabel, spots:[]}; state.shopSpots.push(dayBlock); state.shopSpots.sort((a,b)=>a.day.localeCompare(b.day)); }
+    dayBlock.spots.push({name:get('name'), addr:get('addr'), note:get('note'), maps:get('maps')});
+  } else if (modalType === 'shopSpotItem') {
+    const di = modalCtx.di !== undefined ? modalCtx.di : 0;
+    state.shopSpots[di].spots.push({name:get('name'), addr:get('addr'), note:get('note'), maps:get('maps')});
   }
   saveToFirebase(); render(); closeModal();
 }
@@ -949,6 +975,42 @@ function delSplit(id) {
   state.splits = (state.splits||[]).filter(s => s.id !== id);
   renderSplit();
   saveToFirebase();
+}
+
+function renderShopSpots() {
+  const c = document.getElementById('shopSpotsContainer');
+  if (!c) return;
+  if (!state.shopSpots || !state.shopSpots.length) { c.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:12px 0;">尚未新增代逛店家</div>'; return; }
+  c.innerHTML = state.shopSpots.map((dayBlock, di) => `
+    <div class="spot-day-block">
+      <div class="spot-day-title">${esc(dayBlock.day)}</div>
+      <div class="tbl-wrap" style="border-radius:0 0 8px 8px;">
+        <table>
+          <thead><tr><th style="width:32px"></th><th style="width:22%">店家</th><th style="width:28%">地址</th><th>備註</th><th style="width:90px">連結</th><th class="del-btn" style="width:30px"></th></tr></thead>
+          <tbody>
+            ${dayBlock.spots.map((s, si) => `
+              <tr style="${s.checked ? 'opacity:0.5;' : ''}">
+                <td style="text-align:center;">
+                  <div class="shop-item-check ${s.checked ? 'checked' : ''}" onclick="toggleSpotCheck(${di},${si})"></div>
+                </td>
+                <td><strong contenteditable="false" onblur="state.shopSpots[${di}].spots[${si}].name=this.textContent;saveToFirebase()" style="${s.checked ? 'text-decoration:line-through;color:var(--muted);' : ''}">${esc(s.name)}</strong></td>
+                <td style="font-size:12px;color:var(--muted)" contenteditable="false" onblur="state.shopSpots[${di}].spots[${si}].addr=this.textContent;saveToFirebase()">${esc(s.addr)}</td>
+                <td style="font-size:12px;" contenteditable="false" onblur="state.shopSpots[${di}].spots[${si}].note=this.textContent;saveToFirebase()">${esc(s.note)}</td>
+                <td><div class="link-row">${s.maps ? `<a class="lbtn" href="${s.maps}" target="_blank">Maps ↗</a>` : ''}</div></td>
+                <td style="text-align:center;"><button class="del-btn" onclick="delShopSpot(${di},${si})">🗑</button></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="text-align:right;margin-top:4px;">
+        <button class="add-btn" onclick="openModal('shopSpotItem',{di:${di}})">＋ 新增店家</button>
+      </div>
+    </div>`).join('');
+}
+
+function toggleSpotCheck(di, si) {
+  state.shopSpots[di].spots[si].checked = !state.shopSpots[di].spots[si].checked;
+  saveToFirebase(); renderShopSpots(); applyEditModeStyles();
 }
 
 function renderSplit() {
