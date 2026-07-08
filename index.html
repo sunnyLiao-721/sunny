@@ -1051,6 +1051,16 @@ function toggleSpotCheck(di, si) {
   saveToFirebase(); renderShopSpots(); applyEditModeStyles();
 }
 
+function delShopSpot(di, si) {
+  if (!state.shopSpots || !state.shopSpots[di]) return;
+  state.shopSpots[di].spots.splice(si, 1);
+  // 如果該天的 spots 空了就把整個 dayBlock 也刪掉
+  if (state.shopSpots[di].spots.length === 0) {
+    state.shopSpots.splice(di, 1);
+  }
+  saveToFirebase(); renderShopSpots(); applyEditModeStyles();
+}
+
 function renderSplit() {
   const el = document.getElementById('splitSection');
   if (!el) return;
