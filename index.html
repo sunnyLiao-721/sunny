@@ -41,7 +41,8 @@ body.edit-on .edit-hint{display:block;}
 .cover-title{font-family:'Noto Serif TC',serif;font-size:38px;font-weight:600;line-height:1.2;margin-bottom:6px;}
 .cover-sub{font-size:15px;color:rgba(255,255,255,.5);margin-bottom:28px;}
 .cover-pills{display:flex;gap:8px;flex-wrap:wrap;}
-.cover-pill{font-size:12px;padding:4px 12px;border:0.5px solid rgba(255,255,255,.22);border-radius:99px;color:rgba(255,255,255,.72);}
+.cover-pill{font-size:12px;padding:4px 12px;border:0.5px solid rgba(255,255,255,.22);border-radius:99px;color:rgba(255,255,255,.72);cursor:pointer;text-decoration:none;transition:all .15s;}
+.cover-pill:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.5);color:#fff;}
 
 /* LAYOUT */
 .container{max-width:860px;margin:0 auto;padding:0 24px 60px;}
@@ -212,7 +213,7 @@ body.edit-on .shop-add-item-btn{display:block;}
 <div class="container">
   <div class="edit-hint">✏️ 編輯模式已開啟 — 點擊任何文字修改；按 ➕ 新增項目；按 🗑 刪除（所有人會同步看到更改）</div>
 
-  <div class="sec-header">
+  <div class="sec-header" id="sec-flight">
     <div class="sec-num">①</div>
     <div class="sec-title">機票時間</div>
     <div class="sec-actions">
@@ -226,7 +227,7 @@ body.edit-on .shop-add-item-btn{display:block;}
     </table>
   </div>
 
-  <div class="sec-header">
+  <div class="sec-header" id="sec-itinerary">
     <div class="sec-num">②</div>
     <div class="sec-title">每日行程 & 交通時間</div>
     <div class="sec-actions">
@@ -235,7 +236,7 @@ body.edit-on .shop-add-item-btn{display:block;}
   </div>
   <div id="daysContainer"></div>
 
-  <div class="sec-header">
+  <div class="sec-header" id="sec-cost">
     <div class="sec-num">③</div>
     <div class="sec-title">各項金額</div>
     <div class="sec-actions">
@@ -250,7 +251,7 @@ body.edit-on .shop-add-item-btn{display:block;}
     </table>
   </div>
 
-  <div class="sec-header">
+  <div class="sec-header" id="sec-morishita">
     <div class="sec-num">④</div>
     <div class="sec-title">森下週邊</div>
     <div class="sec-actions">
@@ -264,7 +265,7 @@ body.edit-on .shop-add-item-btn{display:block;}
     </table>
   </div>
 
-  <div class="sec-header">
+  <div class="sec-header" id="sec-shopping">
     <div class="sec-num">⑤</div>
     <div class="sec-title">必買清單</div>
     <div class="sec-actions">
@@ -274,7 +275,7 @@ body.edit-on .shop-add-item-btn{display:block;}
   <div class="shop-grid" id="shopGrid"></div>
 
   <!-- ⑥ 景點地圖 -->
-  <div class="sec-header">
+  <div class="sec-header" id="sec-map">
     <div class="sec-num">⑥</div>
     <div class="sec-title">景點地圖</div>
   </div>
@@ -296,7 +297,7 @@ body.edit-on .shop-add-item-btn{display:block;}
   </div>
 
   <!-- ⑦ 分帳系統 -->
-  <div class="sec-header">
+  <div class="sec-header" id="sec-split">
     <div class="sec-num">⑦</div>
     <div class="sec-title">旅費分帳系統</div>
     <div class="sec-actions">
@@ -306,7 +307,7 @@ body.edit-on .shop-add-item-btn{display:block;}
   <div id="splitSection"></div>
 
   <!-- ⑧ 待逛店家 -->
-  <div class="sec-header">
+  <div class="sec-header" id="sec-spots">
     <div class="sec-num">⑧</div>
     <div class="sec-title">待逛店家</div>
     <div class="sec-actions">
@@ -379,7 +380,16 @@ const FIREBASE_URL = "https://tokyo-trip-2026-31406-default-rtdb.firebaseio.com/
 const DEFAULT = {
   coverTitle: '東京五日遊',
   coverSub: 'December 9–13, 2024',
-  coverPills: ['✈ 桃園 ↔ 成田','🏠 森下住宿','🎡 迪士尼','🗼 東京鐵塔','🛍 原宿・新宿','⚡ 秋葉原'],
+  coverPills: [
+    {label:'✈ 機票時間', href:'sec-flight'},
+    {label:'📅 每日行程', href:'sec-itinerary'},
+    {label:'💴 各項金額', href:'sec-cost'},
+    {label:'🍜 森下週邊', href:'sec-morishita'},
+    {label:'🛍 必買清單', href:'sec-shopping'},
+    {label:'🗺️ 景點地圖', href:'sec-map'},
+    {label:'💰 旅費分帳', href:'sec-split'},
+    {label:'🏪 待逛店家', href:'sec-spots'},
+  ],
   flights: [
     {date:'12/9（Day 1）', route:'桃園機場 → 成田機場', dep:'06:40', arr:'10:40', note:'去程', badge:'b-blue'},
     {date:'12/13（Day 5）', route:'成田機場 → 桃園機場', dep:'19:55', arr:'23:10', note:'回程 · Skyliner 17:00 從京成上野出發，約 41 分抵達成田', badge:'b-red'},
@@ -626,9 +636,15 @@ function render() {
 
 function renderPills() {
   const c = document.getElementById('coverPills');
-  c.innerHTML = state.coverPills.map((p,i) =>
-    `<span class="cover-pill" onblur="state.coverPills[${i}]=this.textContent;saveToFirebase()">${esc(p)}</span>`
-  ).join('') + `<button class="add-btn" onclick="openModal('pill')" style="font-size:11px;padding:3px 10px;border-radius:99px;cursor:pointer;border:1.5px dashed rgba(255,255,255,.3);background:transparent;color:rgba(255,255,255,.5);font-family:inherit;display:none;">＋</button>`;
+  if (!c) return;
+  c.innerHTML = state.coverPills.map((p) => {
+    const label = typeof p === 'object' ? p.label : p;
+    const href = typeof p === 'object' ? p.href : null;
+    if (href) {
+      return `<a class="cover-pill" href="#${href}" onclick="event.preventDefault();const el=document.getElementById('${href}');if(el)el.scrollIntoView({behavior:'smooth'});">${esc(label)}</a>`;
+    }
+    return `<span class="cover-pill">${esc(label)}</span>`;
+  }).join('');
 }
 
 function renderFlights() {
